@@ -89,7 +89,7 @@ function cleanLine(line) {
 }
 
 function expandMacros(queue, line) {
-	const words = line.split(" ");
+	let words = line.split(" ");
 	if (words.length == 0) return;
 
 	const error = msg => process.stderr.write("\x1b[35m" + msg + "\x1b[0m\n");
@@ -108,6 +108,14 @@ function expandMacros(queue, line) {
 			}
 			return;
 		}
+		case "load": {
+			// useful if you are working whith a clips program whithout the .clp extension
+			if (words.length == 2) {
+				const filename = words[1].replace(/"/g, "");
+				queue.push('(load "' + filename + '")');
+			}
+			return;
+		}
 		case ":q" : {
 			queue.push("(exit)");
 			return;
@@ -115,8 +123,16 @@ function expandMacros(queue, line) {
 	}
 
 	addToCompletion(words);
+	words = words.map(w => {
+		if (w.indexOf(".clp") != -1) {
+			const filename = w.replace(/"/g, "");
+			return '"'+filename+'"';
+		}
+		return w;
+	});
 	// basic commands
-	queue.push("(" + line + ")");
+	queue.push("(" + words.join(" ") + ")");
+	console.log("pushed " + queue[queue.length - 1]);
 }
 
 function sendClips(line) {
@@ -145,8 +161,10 @@ function addCurDirClipsFiles() {
 	fs.readdir(".", (err, files) => {
 		if (!err) {
 			for (f of files) {
-				if (f.endsWith(".clp") && completions.indexOf(f) == -1)
+				if (f.endsWith(".clp") && completions.indexOf(f) == -1) {
+					completions.push(f);
 					completions.push('"'+f+'"');
+				}
 			}
 		}
 	});
