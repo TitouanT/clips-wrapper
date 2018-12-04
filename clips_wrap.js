@@ -132,7 +132,6 @@ function expandMacros(queue, line) {
 	});
 	// basic commands
 	queue.push("(" + words.join(" ") + ")");
-	console.log("pushed " + queue[queue.length - 1]);
 }
 
 function sendClips(line) {
