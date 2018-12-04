@@ -12,3 +12,16 @@ This project provides:
 - some macros and aliases:
 	+ `init <filename>` <=> `(clear)\n(load "<filename>")\n(reset)`
 	+ vim like quit `:q`<=> `(exit)`
+
+## install
+
+The simplest way is to add an alias somewhere in your config (`~/.bashrc` or `~/.zshrc` for example)
+
+```bash
+alias clp="node ~/path/to/this/repos/clips_wrap.js"
+```
+Once you've done that it might not work yet because you need to have `clips` in your `$PATH`.
+
+## dependecies
+You need NodeJs[https://nodejs.org/] and CLIPS[http://www.clipsrules.net/]
+
