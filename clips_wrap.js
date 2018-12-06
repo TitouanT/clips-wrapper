@@ -122,8 +122,10 @@ function expandMacros(queue, line) {
 	const error = msg => process.stderr.write("\x1b[35m" + msg + "\x1b[0m\n");
 
 	// "init" macros
-	switch (words[0]) {
-		case "init": {
+	const fst = words[0];
+	switch (true) {
+		case fst.endsWith(".clp"): words.push(fst);
+		case fst == "init": {
 			if (words.length == 2) {
 				const filename = words[1].replace(/"/g, "");
 				queue.push("(clear)");
@@ -135,7 +137,7 @@ function expandMacros(queue, line) {
 			}
 			return;
 		}
-		case "load": {
+		case fst == "load": {
 			// useful if you are working whith a clips program whithout the .clp extension
 			if (words.length == 2) {
 				const filename = words[1].replace(/"/g, "");
@@ -143,7 +145,7 @@ function expandMacros(queue, line) {
 			}
 			return;
 		}
-		case ":q" : {
+		case fst == ":q" : {
 			queue.push("(exit)");
 			return;
 		}
@@ -200,3 +202,5 @@ function addCurDirClipsFiles() {
 // begining of the program
 addCurDirClipsFiles();
 start();
+
+/* vim: set nowrap: */
