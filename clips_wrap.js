@@ -1,11 +1,10 @@
 const exec = require("child_process").exec;
-const readline = require("readline").createInterface({
+const line_reader = require("readline").createInterface({
 	input: process.stdin,
 	output: process.stdout,
 	completer: onTab,
 	removeHistoryDuplicates: true,
 });
-
 // globals definitions
 let clips;
 const completions = [
@@ -13,7 +12,17 @@ const completions = [
 	
 	// everything you can watch
 	'watch', 'unwatch', 'facts', 'instances', 'slots', 'rules', 'activations', 'messages', 'message-handlers', 'generic-functions', 'methods', 'deffunctions', 'compilations', 'statistics', 'globals', 'focus', 'all',
+
+	// macros
+	'init', ':q',
 ];
+
+const Clips_Prompt = "CLIPS> ";
+// made it global because otherwise it would be generated for each datachunks
+const Clips_Subs = Clips_Prompt.split("")
+	.map((char, index, chars) =>
+		chars.slice(0, index+1).join("")
+	)
 
 function start() {
 	// start the clips process
@@ -27,18 +36,13 @@ function start() {
 // handle clips data output and decide when to send back data to clips
 function ondata_handler(){
 	let buffer = "";
-	const clipsPrompt = "CLIPS> ";
 	const sendNextLine = inputDispatcher();
 	return chunk => {
 		buffer += chunk;
 		// console.log("received: " + chunk + "\nend receive");
 		buffer = consumeClipsOutput(buffer);
-		if (buffer.endsWith(clipsPrompt)) {
-			// sometimes, there is some data before the prompt
-			const data_before = buffer.replace(clipsPrompt, "");
-			if (data_before.length != 0) {
-				process.stdin.write(data_before + "\n");
-			}
+
+		if (buffer == Clips_Prompt) {
 			buffer = "";
 			sendNextLine();
 		}
@@ -48,33 +52,59 @@ function ondata_handler(){
 // send outputs from commands back to the user
 // TODO: add coloring
 function consumeClipsOutput(rawoutput) {
-	lines = rawoutput.split("\n");
-	lastLine = lines.pop();
+	const clipsPromt = "CLIPS> ";
+	const lines = rawoutput.split("\n");
+	const lastLine = lines.pop();
 	lines.forEach(line => process.stdout.write(line + "\n"));
-	return lastLine;
+
+	const sub_of_clp_prpt = endsWithPartOfClipsPrompt(lastLine);
+	if (sub_of_clp_prpt) {
+		process.stdin.write(
+			lastLine.slice(0, lastLine.length - sub_of_clp_prpt.length)
+		);
+		return sub_of_clp_prpt;
+	}
+	// line_reader.setPrompt("\x1b[36m"+ lastLine + "\x1b[0m");
+	line_reader.setPrompt(lastLine);
+
+	process.stdin.write(lastLine);
+
+	return "";
+}
+
+
+
+function endsWithPartOfClipsPrompt(str) {
+	for (sub of Clips_Subs) {
+		if (str.endsWith(sub)) return sub;
+	}
+	return null;
 }
 
 // choose between sending user specified commands or expands macros
 function inputDispatcher() {
 	const queue = [];
+	// this way everything the user types when not asked for input is sent to clips
+	line_reader.on("line", sendClips);
 	return async () => {
 		while (queue.length == 0) {
 			// process.stdin.write("\x1b[36m#> ");
 			const userLine = await userInput();
-			process.stdin.write("\x1b[0m");
-
+			
 			// remove unnecessary caracters from the userLine
 			const userCmd = cleanLine(userLine);
 			expandMacros(queue, userCmd);
 		}
 		sendClips(queue.shift());
-
 	};
 }
 
 function userInput() {
 	return new Promise((resolve, reject) => {
-		readline.question("\n\x1b[36m#> ", resolve);
+		line_reader.question("\x1b[36m\n#> ", userline => {
+			process.stdin.write("\x1b[0m");
+			resolve(userline);
+		});
 	});
 }
 
