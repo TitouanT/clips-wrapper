@@ -1,4 +1,4 @@
-const exec = require("child_process").exec;
+const spawn = require("child_process").spawn;
 const line_reader = require("readline").createInterface({
 	input: process.stdin,
 	output: process.stdout,
@@ -26,8 +26,8 @@ const Clips_Subs = Clips_Prompt.split("")
 
 function start() {
 	// start the clips process
-	clips = exec("clips", () => {process.exit()});
-	let rawoutput = "";
+	clips = spawn("clips");
+	clips.on('exit', () => process.exit());
 
 	// setting listening for data on the standard output of clips
 	clips.stdout.on('data', ondata_handler());
@@ -39,7 +39,6 @@ function ondata_handler(){
 	const sendNextLine = inputDispatcher();
 	return chunk => {
 		buffer += chunk;
-		// console.log("received: " + chunk + "\nend receive");
 		buffer = consumeClipsOutput(buffer);
 
 		if (buffer == Clips_Prompt) {
@@ -52,27 +51,26 @@ function ondata_handler(){
 // send outputs from commands back to the user
 // TODO: add coloring
 function consumeClipsOutput(rawoutput) {
-	const clipsPromt = "CLIPS> ";
 	const lines = rawoutput.split("\n");
 	const lastLine = lines.pop();
 	lines.forEach(line => process.stdout.write(line + "\n"));
 
 	const sub_of_clp_prpt = endsWithPartOfClipsPrompt(lastLine);
+
 	if (sub_of_clp_prpt) {
 		process.stdin.write(
 			lastLine.slice(0, lastLine.length - sub_of_clp_prpt.length)
 		);
 		return sub_of_clp_prpt;
 	}
-	// line_reader.setPrompt("\x1b[36m"+ lastLine + "\x1b[0m");
+	// // if last line is intended to be a prompt then on edits it will be seen as a prompt
+	// try editing a line when asked for data in a clips programm with and without this line to see the effect
 	line_reader.setPrompt(lastLine);
 
 	process.stdin.write(lastLine);
 
 	return "";
 }
-
-
 
 function endsWithPartOfClipsPrompt(str) {
 	for (sub of Clips_Subs) {
@@ -88,7 +86,6 @@ function inputDispatcher() {
 	line_reader.on("line", sendClips);
 	return async () => {
 		while (queue.length == 0) {
-			// process.stdin.write("\x1b[36m#> ");
 			const userLine = await userInput();
 			
 			// remove unnecessary caracters from the userLine
