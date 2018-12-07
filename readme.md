@@ -11,6 +11,7 @@ This project provides:
 - no need for the first and last parenthesis (if you put them anyway its fine too)
 - some macros and aliases:
 	+ `init <filename>` <=> `(clear)\n(load "<filename>")\n(reset)`
+	+ `filename.clp` <=> `init filename.clp` (notice the extension)
 	+ vim like quit `:q`<=> `(exit)`
 
 ## install
