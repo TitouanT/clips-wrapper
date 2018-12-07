@@ -9,10 +9,12 @@ This project provides:
 	+ "whatever you typed before" completion
 	+ clips files completion
 - no need for the first and last parenthesis (if you put them anyway its fine too)
+- you can stop the `run` command with `ctrl+c`
 - some macros and aliases:
 	+ `init <filename>` <=> `(clear)\n(load "<filename>")\n(reset)`
 	+ `filename.clp` <=> `init filename.clp` (notice the extension)
 	+ vim like quit `:q`<=> `(exit)`
+	+ `runfast` <=> `(run)` (you can't stop it, `ctrl+c` terminates the programm)
 
 ## install
 

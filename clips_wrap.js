@@ -50,7 +50,10 @@ function start() {
 	global_state.clips_process = spawn("clips");
 
 	// wire handlers for clips process
-	global_state.clips_process.on('exit', () => process.exit());
+	global_state.clips_process.on('exit', () => {
+		process.stdout.write("\x1b[0m\n");
+		process.exit()
+	});
 	global_state.clips_process.stdout.on('data', ondata_handler());
 
 	// wire handlers for the line reader
